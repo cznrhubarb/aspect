@@ -1,0 +1,5 @@
+Codename "Aspect" is going to be a 2D platformer built in Unity.
+
+I'm using it as a learning exercise to practice TDD in a large-scale project. I have no real experience with TDD, but I'm interested in learning more about it. I also read that the conventional wisdom says TDD isn't effective in game development and obviously I am taking this as a challenge.
+
+The game itself is currently planned to be rogue-like (BUZZWORD!) that centers on a character that changes into various animal forms, each with unique control schemes. I'm drawing inspiration from the experience I had playing an Elementalist in Guild Wars 2 (fast paced resource/cooldown management of several hotkey bars and joy of movement). It will probably be inspired a bit by Altered Beast for the Sega Genesis (the idea of changing into animal forms with unique controls) and maybe some of the original Sonic games (for their joy of movement).
