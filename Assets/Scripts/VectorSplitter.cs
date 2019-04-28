@@ -42,7 +42,7 @@ public class VectorSplitter
             {
                 normPerp *= -1f;
             }
-            second = (original * (1-collision.percentToHit)).Project(normPerp);
+            second = (original * (1 - collision.percentToHit)).Project(normPerp);
         }
 
         return new SplitPair(original * collision.percentToHit, second, alignment);

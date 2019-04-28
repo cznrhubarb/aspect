@@ -2,16 +2,16 @@
 
 public class Controller2D
 {
-    public static readonly float Gravity = -40f;
-    public static readonly float WalkSpeed = 15f;
-    public static readonly float JumpPower = 22f;
+    public const float Gravity = -40f;
+    public const float WalkSpeed = 15f;
+    public const float JumpPower = 22f;
     private const float MaxTimeStep = 1 / 100f;
     private const float FloatTolerance = 0.0001f;
+    private const float MaxClampDistance = -Gravity / 200;
 
     public Vector2 Position { get; set; }
     public Vector2 Velocity { get; set; }
 
-    private Vector2 inputVelocity;
     public float WalkForce { get; set; }
     public float JumpForce { get; set; }
 
@@ -35,7 +35,7 @@ public class Controller2D
         {
             this.simulationTimer -= Controller2D.MaxTimeStep;
 
-            this.inputVelocity = new Vector2(this.WalkForce * Controller2D.WalkSpeed, 0);
+            var inputVelocity = new Vector2(this.WalkForce * Controller2D.WalkSpeed, 0);
             this.Velocity += new Vector2(0, Controller2D.Gravity) * Controller2D.MaxTimeStep;
             if (this.isOnGround && this.JumpForce > 0)
             {
@@ -44,14 +44,19 @@ public class Controller2D
 
             this.isOnGround = false;
 
-            this.ApplyVelocity(this.Velocity * Controller2D.MaxTimeStep, true);
-            this.ApplyVelocity(this.inputVelocity * Controller2D.MaxTimeStep, false);
+            this.ApplyVelocity(this.Velocity * Controller2D.MaxTimeStep, false);
+            if (inputVelocity.sqrMagnitude > 0)
+            {
+                this.ApplyVelocity(inputVelocity * Controller2D.MaxTimeStep, true);
+                Debug.Log(this.Position.ToString("F3"));
+            }
         }
     }
 
-    private void ApplyVelocity(Vector2 velocity, bool shouldAdjust)
+    private void ApplyVelocity(Vector2 velocity, bool isInputVelocity)
     {
         var collision = new BoxProjection(this.Collider.bounds, this.Position, velocity).Project();
+
         var adjustmentVectors = VectorSplitter.Split(velocity, collision);
 
         this.Position += adjustmentVectors.First;
@@ -61,18 +66,38 @@ public class Controller2D
             if (Vector2.Angle(collision.normal, Vector2.up) < 45 && adjustmentVectors.Alignment == CollisionAlignment.Opposed)
             {
                 this.isOnGround = true;
-                if (shouldAdjust)
+                if (!isInputVelocity)
                 {
                     this.Velocity = Vector2.zero;
                 }
             }
             else
             {
-                if (shouldAdjust)
+                if (!isInputVelocity)
                 {
                     this.Velocity = this.Velocity.Project(adjustmentVectors.Second);
                 }
-                this.ApplyVelocity(adjustmentVectors.Second, shouldAdjust);
+                if (adjustmentVectors.Second.sqrMagnitude > 0)
+                {
+                    this.Position += adjustmentVectors.Second;
+                }
+            }
+        }
+        else if (isInputVelocity)
+        {
+            this.ClampToSlopes(velocity);
+        }
+    }
+
+    private void ClampToSlopes(Vector2 velocity)
+    {
+        var clampVector = new Vector2(0, -MaxClampDistance);
+        var collision = new BoxProjection(this.Collider.bounds, this.Position, clampVector).Project();
+        if (collision)
+        {
+            if (Vector2.Angle(velocity, collision.normal) < 90)
+            {
+                this.Position += clampVector * collision.percentToHit;
             }
         }
     }

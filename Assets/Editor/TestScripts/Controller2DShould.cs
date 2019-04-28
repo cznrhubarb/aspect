@@ -104,7 +104,7 @@ namespace Tests
                 this.ground.name = "Ground (Test)";
                 this.ground.layer = LayerMask.NameToLayer("SolidObstacles");
                 var groundCollider = this.ground.AddComponent<BoxCollider2D>();
-                groundCollider.size = new Vector2(3, 1);
+                groundCollider.size = new Vector2(200, 1);
                 groundCollider.offset = new Vector2(0, this.controller.Collider.transform.position.y - this.controller.Collider.bounds.extents.y - groundCollider.bounds.extents.y);
             }
 
@@ -201,7 +201,7 @@ namespace Tests
             }
 
             [Test]
-            public void StandOnSlopes()
+            public void StandOnShallowSlopes()
             {
                 var groundCollider = this.ground.GetComponent<BoxCollider2D>();
                 this.ground.transform.Rotate(new Vector3(0, 0, 30));
@@ -211,6 +211,20 @@ namespace Tests
                 var currentY = this.controller.Position.y;
                 this.controller.Simulate(1);
                 Assert.AreEqual(currentY, this.controller.Position.y, FloatTolerance);
+            }
+
+            [Test]
+            public void SlideDownSteepSlopes()
+            {
+                var groundCollider = this.ground.GetComponent<BoxCollider2D>();
+                this.ground.transform.Rotate(new Vector3(0, 0, 50));
+                groundCollider.offset = new Vector2(groundCollider.offset.x, groundCollider.offset.y - 1);
+
+                this.controller.Simulate(1);
+                var startingPosition = this.controller.Position;
+                this.controller.Simulate(1);
+                Assert.Less(this.controller.Position.x, startingPosition.x);
+                Assert.Less(this.controller.Position.y, startingPosition.y);
             }
         }
 
@@ -389,6 +403,50 @@ namespace Tests
                 //  And I think that is borking me. And I don't want to figure out a perfect solution.
                 var roundingError = Controller2D.WalkSpeed * 0.01f;
                 Assert.AreEqual(currentY + Controller2D.WalkSpeed * Mathf.Sin(30 * Mathf.Deg2Rad), this.controller.Position.y, roundingError);
+            }
+
+            [Test]
+            public void AdjustPositionHorizontallyWhenWalkingDownSlopes()
+            {
+                var groundCollider = this.ground.GetComponent<BoxCollider2D>();
+                this.ground.transform.Rotate(new Vector3(0, 0, 30));
+                groundCollider.offset = new Vector2(groundCollider.offset.x, groundCollider.offset.y - 1);
+
+                this.controller.Simulate(1);
+                this.controller.WalkForce = -1;
+                this.controller.Simulate(1);
+                // Yes, this means player walks faster down slopes than up slopes or horizontally
+                Assert.AreEqual(-Controller2D.WalkSpeed, this.controller.Position.x, FloatTolerance);
+            }
+
+            [Test]
+            public void AdjustPositionVerticallyWhenWalkingDownSlopes()
+            {
+                var groundCollider = this.ground.GetComponent<BoxCollider2D>();
+                this.ground.transform.Rotate(new Vector3(0, 0, 30));
+                groundCollider.offset = new Vector2(groundCollider.offset.x, groundCollider.offset.y - 1);
+
+                this.controller.Simulate(1);
+                var currentY = this.controller.Position.y;
+                this.controller.WalkForce = -1;
+                this.controller.Simulate(1);
+                // Yes, this means player walks faster down slopes than up slopes or horizontally
+                Assert.AreEqual(currentY - Controller2D.WalkSpeed * Mathf.Tan(30 * Mathf.Deg2Rad), this.controller.Position.y, FloatTolerance);
+            }
+
+            [Test]
+            public void NotBeAbleToWalkUpSteepSlopes()
+            {
+                var groundCollider = this.ground.GetComponent<BoxCollider2D>();
+                this.ground.transform.Rotate(new Vector3(0, 0, 50));
+                groundCollider.offset = new Vector2(groundCollider.offset.x, groundCollider.offset.y - 1);
+
+                this.controller.Simulate(1);
+                this.controller.WalkForce = 1;
+                var startingPosition = this.controller.Position;
+                this.controller.Simulate(1);
+                Assert.Less(this.controller.Position.x, startingPosition.x);
+                Assert.Less(this.controller.Position.y, startingPosition.y);
             }
         }
     }
