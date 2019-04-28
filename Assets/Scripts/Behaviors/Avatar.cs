@@ -9,7 +9,7 @@ public class Avatar : MonoBehaviour
         this.Controller = new Controller2D(this.GetComponent<BoxCollider2D>());
     }
 
-    void Update()
+    void FixedUpdate()
     {
         Vector2 input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
         this.Controller.WalkForce = input.x;

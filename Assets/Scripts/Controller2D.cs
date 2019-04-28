@@ -48,7 +48,6 @@ public class Controller2D
             if (inputVelocity.sqrMagnitude > 0)
             {
                 this.ApplyVelocity(inputVelocity * Controller2D.MaxTimeStep, true);
-                Debug.Log(this.Position.ToString("F3"));
             }
         }
     }

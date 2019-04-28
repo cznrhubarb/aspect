@@ -38,20 +38,9 @@ public class BoxProjection
             var hit = Physics2D.Raycast(ray.origin, ray.direction, projectedVelocityLength + BoxProjection.SkinWidth, collisionLayer);
             if (hit && hit.distance < closestHit.distance)
             {
-                // TODO: Two raycast algorithm was put in place because of a problem with not taking into account movement
-                //  in one axis that would avoid the collision in the other
-                // Originally was just trying to set the ray origin to account for this offset, but this caused a different
-                //  problem if the ray origin was now inside of a collision volume and would create a false positive collision
-                // Maybe the trick is to offset the ray origins, but order the ray checking someway better than by distance?
-                //  Or maybe I need to test each ray origin and only offset it if it isn't in a volume?
-                var displacedOrigin = ray.origin + (ray.direction.x > 0 ? new Vector2(0, this.projectionVector.y) : new Vector2(this.projectionVector.x, 0));
-                var wouldStillHit = Physics2D.Raycast(displacedOrigin, ray.direction, projectedVelocityLength + BoxProjection.SkinWidth, collisionLayer);
-                if (wouldStillHit)
-                {
-                    closestHit = wouldStillHit;
-                    collEvent.normal = closestHit.normal;
-                    collEvent.percentToHit = (closestHit.distance - BoxProjection.SkinWidth) / projectedVelocityLength;
-                }
+                closestHit = hit;
+                collEvent.normal = closestHit.normal;
+                collEvent.percentToHit = (closestHit.distance - BoxProjection.SkinWidth) / projectedVelocityLength;
             }
         }
 
