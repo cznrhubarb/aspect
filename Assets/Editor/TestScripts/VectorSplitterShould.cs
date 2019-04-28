@@ -5,10 +5,6 @@ using UnityEngine;
 
 namespace Tests
 {
-    // Terminology used in this class:
-    //  An Opposed Collision is one where the normal is <= 45 degrees different from the opposite of the original vector
-    //  A Non Opposed Collision will have a normal that is > 45 degrees different (but less than 90 because otherwise there would be no collision)
-
     public class VectorSplitterShould
     {
         private const float FloatTolerance = 0.0001f;
@@ -22,11 +18,11 @@ namespace Tests
         }
 
         [Test]
-        public void ReturnOnlyOneVectorWhenThereIsNoCollision()
+        public void KnowWhenThereIsNoCollision()
         {
             var originalVector = Vector2.right;
             var newVectors = VectorSplitter.Split(originalVector, this.collisionEvent);
-            Assert.AreEqual(1, newVectors.Count);
+            Assert.AreEqual(CollisionAlignment.NoSplit, newVectors.Alignment);
         }
 
         private static IEnumerable<TestCaseData> OriginalVectorMatchData
@@ -41,7 +37,7 @@ namespace Tests
         public void ReturnOriginalVectorWhenThereIsNoCollision(Vector2 originalVector, Vector2 goalVector)
         {
             var newVectors = VectorSplitter.Split(originalVector, this.collisionEvent);
-            Assert.AreEqual(goalVector, newVectors[0]);
+            Assert.AreEqual(goalVector, newVectors.First);
         }
 
         private static IEnumerable<TestCaseData> OpposedCollisionData
@@ -55,12 +51,12 @@ namespace Tests
             }
         }
         [TestCaseSource("OpposedCollisionData")]
-        public void ReturnOnlyOneVectorWhenThereIsAnOpposedCollision(Vector2 originalVector, Vector2 collisionNormal)
+        public void KnowWhenThereIsAnOpposedCollision(Vector2 originalVector, Vector2 collisionNormal)
         {
             this.collisionEvent.percentToHit = 0.5f;
             this.collisionEvent.normal = collisionNormal;
             var newVectors = VectorSplitter.Split(originalVector, this.collisionEvent);
-            Assert.AreEqual(1, newVectors.Count);
+            Assert.AreEqual(CollisionAlignment.Opposed, newVectors.Alignment);
         }
 
         private static IEnumerable<TestCaseData> NonOpposedCollisionData
@@ -73,35 +69,73 @@ namespace Tests
             }
         }
         [TestCaseSource("NonOpposedCollisionData")]
-        public void ReturnTwoVectorsWhenThereIsANonOpposedCollision(Vector2 originalVector, Vector2 collisionNormal)
+        public void KnowWhenThereIsANonOpposedCollision(Vector2 originalVector, Vector2 collisionNormal)
         {
             this.collisionEvent.percentToHit = 0.5f;
             this.collisionEvent.normal = collisionNormal;
             var newVectors = VectorSplitter.Split(originalVector, this.collisionEvent);
-            Assert.AreEqual(2, newVectors.Count);
+            Assert.AreEqual(CollisionAlignment.NonOpposed, newVectors.Alignment);
         }
 
-        [TestCase(0.2f)]
-        [TestCase(0.5f)]
-        public void ReturnTwoVectorsWithMagnitudesProportionalToCollisionTimeWhenThereIsANonOpposedCollision(float timeToCollision)
+        private static IEnumerable<TestCaseData> FirstMagnitudeCheckData
         {
-            var originalVector = new Vector2(3, 2);
+            get
+            {
+                yield return new TestCaseData(0.3f, 30);
+                yield return new TestCaseData(0.7f, 30);
+                yield return new TestCaseData(0.2f, 60);
+                yield return new TestCaseData(0.6f, -30);
+                yield return new TestCaseData(0.8f, 0);
+            }
+        }
+        [TestCaseSource("FirstMagnitudeCheckData")]
+        public void ReturnsFirstVectorWithMagnitudeProportionalToCollisionTime(float timeToCollision, float normalRotation)
+        {
+            var originalVector = new Vector2(1, 3);
             this.collisionEvent.percentToHit = timeToCollision;
-            this.collisionEvent.normal = (originalVector * -1f).Rotate(50).normalized;
+            this.collisionEvent.normal = (originalVector * -1f).Rotate(normalRotation);
             var newVectors = VectorSplitter.Split(originalVector, this.collisionEvent);
-            Assert.AreEqual(timeToCollision, newVectors[0].magnitude / originalVector.magnitude);
-            Assert.AreEqual((1-timeToCollision), newVectors[1].magnitude / originalVector.magnitude);
+            Assert.AreEqual(timeToCollision, newVectors.First.magnitude / originalVector.magnitude, FloatTolerance);
         }
 
-        [TestCase(0.3f)]
-        [TestCase(0.7f)]
-        public void ReturnOneVectorWithMagnitudeProportionalToCollisionTimeWhenThereIsAnOpposedCollision(float timeToCollision)
+        private static IEnumerable<TestCaseData> SecondMagnitudeCheckData
         {
-            var originalVector = new Vector2(3, 2);
+            get
+            {
+                yield return new TestCaseData(0.3f, 30);
+                yield return new TestCaseData(0.7f, 30);
+                yield return new TestCaseData(0.2f, 60);
+                yield return new TestCaseData(0.6f, -30);
+            }
+        }
+        [TestCaseSource("SecondMagnitudeCheckData")]
+        public void ReturnsSecondVectorWithMagnitudeProportionalToCollisionTimeIfNotOpposite(float timeToCollision, float normalRotation)
+        {
+            var originalVector = new Vector2(4, 2);
             this.collisionEvent.percentToHit = timeToCollision;
-            this.collisionEvent.normal = (originalVector * -1f).Rotate(30).normalized;
+            this.collisionEvent.normal = (originalVector * -1f).Rotate(normalRotation);
             var newVectors = VectorSplitter.Split(originalVector, this.collisionEvent);
-            Assert.AreEqual(timeToCollision, newVectors[0].magnitude / originalVector.magnitude);
+            var expectedMagnitude = Mathf.Cos((90 - Mathf.Abs(normalRotation)) * Mathf.Deg2Rad) * (1 - timeToCollision);
+            Assert.AreEqual(expectedMagnitude, newVectors.Second.magnitude / originalVector.magnitude, FloatTolerance);
+        }
+
+        [Test]
+        public void ReturnsSecondVectorAsZeroIfCollisionIsOpposite()
+        {
+            var originalVector = new Vector2(4, 2);
+            this.collisionEvent.percentToHit = 0.4f;
+            this.collisionEvent.normal = originalVector * -1f;
+            var newVectors = VectorSplitter.Split(originalVector, this.collisionEvent);
+            Assert.AreEqual(0, newVectors.Second.magnitude, FloatTolerance);
+        }
+
+        [Test]
+        public void ReturnsSecondVectorAsZeroIfThereIsNoCollision()
+        {
+            var originalVector = new Vector2(4, 2);
+            this.collisionEvent.percentToHit = 1;
+            var newVectors = VectorSplitter.Split(originalVector, this.collisionEvent);
+            Assert.AreEqual(0, newVectors.Second.magnitude, FloatTolerance);
         }
 
         [TestCaseSource("NonOpposedCollisionData")]
@@ -110,7 +144,7 @@ namespace Tests
             this.collisionEvent.percentToHit = 0.4f;
             this.collisionEvent.normal = collisionNormal;
             var newVectors = VectorSplitter.Split(originalVector, this.collisionEvent);
-            Assert.Less(Vector2.Distance(originalVector.normalized, newVectors[0].normalized), FloatTolerance);
+            Assert.Less(Vector2.Distance(originalVector.normalized, newVectors.First.normalized), FloatTolerance);
         }
 
         private static IEnumerable<TestCaseData> ReflectedVectorData
@@ -119,6 +153,8 @@ namespace Tests
             {
                 yield return new TestCaseData(Vector2.up, (Vector2.up * -1f).Rotate(60), (Vector2.up * -1f).Rotate(60 + 90));
                 yield return new TestCaseData(Vector2.right, (Vector2.right * -1f).Rotate(-80), (Vector2.right * -1f).Rotate(-80 - 90));
+                yield return new TestCaseData(Vector2.right, (Vector2.right * -1f).Rotate(45), (Vector2.right * -1f).Rotate(45 + 90));
+                yield return new TestCaseData(Vector2.up, (Vector2.up * -1f).Rotate(-25), (Vector2.up * -1f).Rotate(-25 - 90));
             }
         }
         [TestCaseSource("ReflectedVectorData")]
@@ -127,10 +163,10 @@ namespace Tests
             this.collisionEvent.percentToHit = 0.4f;
             this.collisionEvent.normal = collisionNormal;
             var newVectors = VectorSplitter.Split(originalVector, this.collisionEvent);
-            Assert.Less(Vector2.Distance(reflectedVector.normalized, newVectors[1].normalized), FloatTolerance);
+            Assert.Less(Vector2.Distance(reflectedVector.normalized, newVectors.Second.normalized), FloatTolerance);
         }
 
-        private static IEnumerable<TestCaseData> ExceptionalNormalData
+        private static IEnumerable<TestCaseData> AlignedNormalData
         {
             get
             {
@@ -139,13 +175,13 @@ namespace Tests
                 yield return new TestCaseData(Vector2.right, Vector2.right.Rotate(30));
             }
         }
-        [TestCaseSource("ExceptionalNormalData")]
-        public void ThrowAnExceptionWhenOriginalVectorAndCollisionNormalAreAligned(Vector2 originalVector, Vector2 collisionNormal)
+        [TestCaseSource("AlignedNormalData")]
+        public void KnowWhenOriginalVectorAndCollisionNormalAreAligned(Vector2 originalVector, Vector2 collisionNormal)
         {
             this.collisionEvent.percentToHit = 0.4f;
             this.collisionEvent.normal = collisionNormal;
-            var exception = Assert.Throws<ArgumentException>(() => VectorSplitter.Split(originalVector, this.collisionEvent));
-            Assert.That(exception.Message, Is.EqualTo("Invalid Collision Normal: Collision normal is aligned with the vector to be split"));
+            var newVectors = VectorSplitter.Split(originalVector, this.collisionEvent);
+            Assert.AreEqual(CollisionAlignment.Aligned, newVectors.Alignment);
         }
     }
 }

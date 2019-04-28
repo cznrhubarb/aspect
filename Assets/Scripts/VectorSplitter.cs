@@ -3,35 +3,62 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum CollisionAlignment
+{
+    NoSplit,
+    Opposed,
+    NonOpposed,
+    Aligned
+}
+
 public class VectorSplitter
 {
     private const float MinimumAngleOfReflection = 90;
     private const float MaximumAngleOfReflection = 180 - 45;
 
-    public static List<Vector2> Split(Vector2 original, CollisionEvent collision)
+    public static SplitPair Split(Vector2 original, CollisionEvent collision)
     {
-        var splitVectors = new List<Vector2>() { original * collision.percentToHit };
+        Vector2 second = Vector2.zero;
+        CollisionAlignment alignment = CollisionAlignment.NoSplit;
 
         if (collision)
         {
             var angle = Vector2.SignedAngle(original, collision.normal);
             if (Mathf.Abs(angle) <= MinimumAngleOfReflection)
             {
-                throw new ArgumentException("Invalid Collision Normal: Collision normal is aligned with the vector to be split");
+                alignment = CollisionAlignment.Aligned;
             }
-
-            if (Mathf.Abs(angle) < MaximumAngleOfReflection)
+            else if (Mathf.Abs(angle) < MaximumAngleOfReflection)
             {
-                Vector2 second = new Vector2(collision.normal.y, -collision.normal.x);
-                if (angle < 0)
-                {
-                    second *= -1f;
-                }
-                second = second.normalized * original.magnitude * (1 - collision.percentToHit);
-                splitVectors.Add(second);
+                alignment = CollisionAlignment.NonOpposed;
             }
+            else
+            {
+                alignment = CollisionAlignment.Opposed;
+            }
+            
+            Vector2 normPerp = Vector2.Perpendicular(collision.normal).normalized;
+            if (angle < 0)
+            {
+                normPerp *= -1f;
+            }
+            second = (original * (1-collision.percentToHit)).Project(normPerp);
         }
 
-        return splitVectors;
+        return new SplitPair(original * collision.percentToHit, second, alignment);
+    }
+
+    public class SplitPair
+    {
+        public Vector2 First { get; private set; }
+        public Vector2 Second { get; private set; }
+        public CollisionAlignment Alignment { get; private set; }
+
+        public SplitPair(Vector2 first, Vector2 second, CollisionAlignment alignment)
+        {
+            this.First = first;
+            this.Second = second;
+            this.Alignment = alignment;
+        }
     }
 }

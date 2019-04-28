@@ -13,4 +13,16 @@ public static class Vector2Extension
         v.y = (sin * tx) + (cos * ty);
         return v;
     }
+
+    public static Vector2 Project(this Vector2 v, Vector2 onto)
+    {
+        if (onto.sqrMagnitude == 0)
+        {
+            return Vector2.zero;
+        }
+        else
+        {
+            return onto * (Vector2.Dot(v, onto) / onto.sqrMagnitude);
+        }
+    }
 }

@@ -2,9 +2,9 @@
 
 public class Controller2D
 {
-    public static readonly float Gravity = -10f;
+    public static readonly float Gravity = -40f;
     public static readonly float WalkSpeed = 15f;
-    public static readonly float JumpPower = 12f;
+    public static readonly float JumpPower = 22f;
     private const float MaxTimeStep = 1 / 100f;
     private const float FloatTolerance = 0.0001f;
 
@@ -44,33 +44,35 @@ public class Controller2D
 
             this.isOnGround = false;
 
-            this.ApplyVelocity(Controller2D.MaxTimeStep);
+            this.ApplyVelocity(this.Velocity * Controller2D.MaxTimeStep, true);
+            this.ApplyVelocity(this.inputVelocity * Controller2D.MaxTimeStep, false);
         }
     }
 
-    private void ApplyVelocity(float simDuration)
+    private void ApplyVelocity(Vector2 velocity, bool shouldAdjust)
     {
-        var appliedVelocity = (this.Velocity + this.inputVelocity) * simDuration;
+        var collision = new BoxProjection(this.Collider.bounds, this.Position, velocity).Project();
+        var adjustmentVectors = VectorSplitter.Split(velocity, collision);
 
-        var collision = new BoxProjection(this.Collider.bounds, this.Position, appliedVelocity).Project();
-
-        appliedVelocity *= collision.percentToHit;
-        this.Position += appliedVelocity;
+        this.Position += adjustmentVectors.First;
 
         if (collision)
         {
-            if (collision.normal.y > Controller2D.FloatTolerance)
+            if (Vector2.Angle(collision.normal, Vector2.up) < 45 && adjustmentVectors.Alignment == CollisionAlignment.Opposed)
             {
                 this.isOnGround = true;
-                collision.normal = new Vector2(0, 1);
+                if (shouldAdjust)
+                {
+                    this.Velocity = Vector2.zero;
+                }
             }
-
-            this.Velocity -= Vector2.Dot(this.Velocity, collision.normal) * collision.normal;
-            this.inputVelocity -= Vector2.Dot(this.inputVelocity, collision.normal) * collision.normal;
-
-            if (this.Velocity.magnitude > Controller2D.FloatTolerance || this.inputVelocity.magnitude > Controller2D.FloatTolerance)
+            else
             {
-                this.ApplyVelocity(simDuration * (1 - collision.percentToHit));
+                if (shouldAdjust)
+                {
+                    this.Velocity = this.Velocity.Project(adjustmentVectors.Second);
+                }
+                this.ApplyVelocity(adjustmentVectors.Second, shouldAdjust);
             }
         }
     }
