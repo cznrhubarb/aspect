@@ -1,5 +1,4 @@
 ﻿using NUnit.Framework;
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,8 +6,6 @@ namespace Tests
 {
     public class VectorSplitterShould
     {
-        private const float FloatTolerance = 0.0001f;
-
         private CollisionEvent collisionEvent;
 
         [SetUp]
@@ -95,7 +92,7 @@ namespace Tests
             this.collisionEvent.percentToHit = timeToCollision;
             this.collisionEvent.normal = (originalVector * -1f).Rotate(normalRotation);
             var newVectors = VectorSplitter.Split(originalVector, this.collisionEvent);
-            Assert.AreEqual(timeToCollision, newVectors.First.magnitude / originalVector.magnitude, FloatTolerance);
+            Assert.AreEqual(timeToCollision, newVectors.First.magnitude / originalVector.magnitude, Common.FloatTolerance);
         }
 
         private static IEnumerable<TestCaseData> SecondMagnitudeCheckData
@@ -116,7 +113,7 @@ namespace Tests
             this.collisionEvent.normal = (originalVector * -1f).Rotate(normalRotation);
             var newVectors = VectorSplitter.Split(originalVector, this.collisionEvent);
             var expectedMagnitude = Mathf.Cos((90 - Mathf.Abs(normalRotation)) * Mathf.Deg2Rad) * (1 - timeToCollision);
-            Assert.AreEqual(expectedMagnitude, newVectors.Second.magnitude / originalVector.magnitude, FloatTolerance);
+            Assert.AreEqual(expectedMagnitude, newVectors.Second.magnitude / originalVector.magnitude, Common.FloatTolerance);
         }
 
         [Test]
@@ -126,7 +123,7 @@ namespace Tests
             this.collisionEvent.percentToHit = 0.4f;
             this.collisionEvent.normal = originalVector * -1f;
             var newVectors = VectorSplitter.Split(originalVector, this.collisionEvent);
-            Assert.AreEqual(0, newVectors.Second.magnitude, FloatTolerance);
+            Assert.AreEqual(0, newVectors.Second.magnitude, Common.FloatTolerance);
         }
 
         [Test]
@@ -135,7 +132,7 @@ namespace Tests
             var originalVector = new Vector2(4, 2);
             this.collisionEvent.percentToHit = 1;
             var newVectors = VectorSplitter.Split(originalVector, this.collisionEvent);
-            Assert.AreEqual(0, newVectors.Second.magnitude, FloatTolerance);
+            Assert.AreEqual(0, newVectors.Second.magnitude, Common.FloatTolerance);
         }
 
         [TestCaseSource("NonOpposedCollisionData")]
@@ -144,7 +141,7 @@ namespace Tests
             this.collisionEvent.percentToHit = 0.4f;
             this.collisionEvent.normal = collisionNormal;
             var newVectors = VectorSplitter.Split(originalVector, this.collisionEvent);
-            Assert.Less(Vector2.Distance(originalVector.normalized, newVectors.First.normalized), FloatTolerance);
+            Assert.Less(Vector2.Distance(originalVector.normalized, newVectors.First.normalized), Common.FloatTolerance);
         }
 
         private static IEnumerable<TestCaseData> ReflectedVectorData
@@ -163,7 +160,7 @@ namespace Tests
             this.collisionEvent.percentToHit = 0.4f;
             this.collisionEvent.normal = collisionNormal;
             var newVectors = VectorSplitter.Split(originalVector, this.collisionEvent);
-            Assert.Less(Vector2.Distance(reflectedVector.normalized, newVectors.Second.normalized), FloatTolerance);
+            Assert.Less(Vector2.Distance(reflectedVector.normalized, newVectors.Second.normalized), Common.FloatTolerance);
         }
 
         private static IEnumerable<TestCaseData> AlignedNormalData

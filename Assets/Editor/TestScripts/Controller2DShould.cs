@@ -5,8 +5,6 @@ namespace Tests
 {
     public class Controller2DShould
     {
-        private const float FloatTolerance = 0.0001f;
-
         public class CreationTests
         {
             private GameObject player;
@@ -57,7 +55,7 @@ namespace Tests
             public void BeAffectedByGravity()
             {
                 this.controller.Simulate(1);
-                Assert.AreEqual(Controller2D.Gravity, this.controller.Velocity.y, FloatTolerance);
+                Assert.AreEqual(Controller2D.Gravity, this.controller.Velocity.y, Common.FloatTolerance);
             }
 
             [Test]
@@ -65,14 +63,14 @@ namespace Tests
             {
                 this.controller.Velocity = new Vector2(0, 20);
                 this.controller.Simulate(1);
-                Assert.AreEqual(20 + Controller2D.Gravity, this.controller.Velocity.y, FloatTolerance);
+                Assert.AreEqual(20 + Controller2D.Gravity, this.controller.Velocity.y, Common.FloatTolerance);
             }
 
             [Test]
             public void NotChangePositionIfVelocityIsZero()
             {
                 this.controller.Simulate(1);
-                Assert.AreEqual(0, this.controller.Position.x, FloatTolerance);
+                Assert.AreEqual(0, this.controller.Position.x, Common.FloatTolerance);
             }
 
             [Test]
@@ -81,7 +79,7 @@ namespace Tests
                 this.controller.Velocity = new Vector2(10, 0);
                 this.controller.Simulate(1);
                 this.controller.Simulate(0.5f);
-                Assert.AreEqual(15, this.controller.Position.x, FloatTolerance);
+                Assert.AreEqual(15, this.controller.Position.x, Common.FloatTolerance);
             }
         }
 
@@ -112,14 +110,14 @@ namespace Tests
             public void CleanUp()
             {
                 GameObject.DestroyImmediate(this.player);
-                GameObject.DestroyImmediate(ground);
+                GameObject.DestroyImmediate(this.ground);
             }
 
             [Test]
             public void NotFallWhenOnTheGround()
             {
                 this.controller.Simulate(1);
-                Assert.AreEqual(0, this.controller.Position.y, FloatTolerance);
+                Assert.AreEqual(0, this.controller.Position.y, Common.FloatTolerance);
             }
 
             [Test]
@@ -137,16 +135,16 @@ namespace Tests
                 var groundCollider = this.ground.GetComponent<BoxCollider2D>();
                 groundCollider.offset += new Vector2(0, -1);
                 this.controller.Simulate(1);
-                Assert.AreEqual(-1, this.controller.Position.y, FloatTolerance);
+                Assert.AreEqual(-1, this.controller.Position.y, Common.FloatTolerance);
             }
 
             [Test]
             public void NotAdjustVelocityIfCollisionWouldNotOccur()
             {
                 var groundCollider = this.ground.GetComponent<BoxCollider2D>();
-                groundCollider.offset += new Vector2(0, -8);
+                groundCollider.offset += new Vector2(0, 50);
                 this.controller.Simulate(0.1f);
-                Assert.AreEqual(Controller2D.Gravity * 0.1f, this.controller.Velocity.y, FloatTolerance);
+                Assert.AreEqual(Controller2D.Gravity * 0.1f, this.controller.Velocity.y, Common.FloatTolerance);
             }
 
             [Test]
@@ -155,7 +153,7 @@ namespace Tests
                 var groundCollider = this.ground.GetComponent<BoxCollider2D>();
                 groundCollider.offset += new Vector2(0, 1);
                 this.controller.Simulate(1);
-                Assert.AreEqual(0, this.controller.Velocity.y, FloatTolerance);
+                Assert.AreEqual(0, this.controller.Velocity.y, Common.FloatTolerance);
             }
 
             [Test]
@@ -163,7 +161,7 @@ namespace Tests
             {
                 this.controller.Velocity = new Vector2(5, 0);
                 this.controller.Simulate(1);
-                Assert.AreEqual(5, this.controller.Position.x, FloatTolerance);
+                Assert.AreEqual(5, this.controller.Position.x, Common.FloatTolerance);
             }
 
             [Test]
@@ -175,7 +173,7 @@ namespace Tests
 
                 this.controller.Velocity = new Vector2(5, 0);
                 this.controller.Simulate(1);
-                Assert.AreEqual(1, this.controller.Position.x, FloatTolerance);
+                Assert.AreEqual(1, this.controller.Position.x, Common.FloatTolerance);
             }
 
             [Test]
@@ -192,7 +190,7 @@ namespace Tests
 
                     this.controller.Velocity = new Vector2(5, 0);
                     this.controller.Simulate(1);
-                    Assert.AreEqual(1, this.controller.Position.x, FloatTolerance);
+                    Assert.AreEqual(1, this.controller.Position.x, Common.FloatTolerance);
                 }
                 finally
                 {
@@ -210,7 +208,7 @@ namespace Tests
                 this.controller.Simulate(1);
                 var currentY = this.controller.Position.y;
                 this.controller.Simulate(1);
-                Assert.AreEqual(currentY, this.controller.Position.y, FloatTolerance);
+                Assert.AreEqual(currentY, this.controller.Position.y, Common.FloatTolerance);
             }
 
             [Test]
@@ -225,6 +223,20 @@ namespace Tests
                 this.controller.Simulate(1);
                 Assert.Less(this.controller.Position.x, startingPosition.x);
                 Assert.Less(this.controller.Position.y, startingPosition.y);
+            }
+
+            [TestCase(0)]
+            [TestCase(20)]
+            [TestCase(-50)]
+            public void ShouldStartFallingIfTheyHitACeiling(float ceilingRotation)
+            {
+                var groundCollider = this.ground.GetComponent<BoxCollider2D>();
+                this.ground.transform.Rotate(new Vector3(0, 0, ceilingRotation));
+                groundCollider.offset = new Vector2(0, 3 + this.controller.Collider.transform.position.y + this.controller.Collider.bounds.extents.y + groundCollider.bounds.extents.y);
+
+                this.controller.Velocity = new Vector2(0, 50);
+                this.controller.Simulate(0.2f);
+                Assert.Less(this.controller.Velocity.y, 0);
             }
         }
 
@@ -254,7 +266,7 @@ namespace Tests
             {
                 this.controller.WalkForce = 1;
                 this.controller.Simulate(1);
-                Assert.AreEqual(Controller2D.WalkSpeed, this.controller.Position.x, FloatTolerance);
+                Assert.AreEqual(Controller2D.WalkSpeed, this.controller.Position.x, Common.FloatTolerance);
             }
 
             [Test]
@@ -263,7 +275,7 @@ namespace Tests
                 this.controller.WalkForce = 1;
                 this.controller.Simulate(0.1f);
                 this.controller.Simulate(0.9f);
-                Assert.AreEqual(Controller2D.WalkSpeed, this.controller.Position.x, FloatTolerance);
+                Assert.AreEqual(Controller2D.WalkSpeed, this.controller.Position.x, Common.FloatTolerance);
             }
 
             [Test]
@@ -273,7 +285,7 @@ namespace Tests
                 this.controller.Simulate(1);
                 this.controller.WalkForce = 0;
                 this.controller.Simulate(1);
-                Assert.AreEqual(Controller2D.WalkSpeed, this.controller.Position.x, FloatTolerance);
+                Assert.AreEqual(Controller2D.WalkSpeed, this.controller.Position.x, Common.FloatTolerance);
             }
         }
 
@@ -345,7 +357,7 @@ namespace Tests
                 this.controller.JumpForce = 1;
                 this.controller.Simulate(0.5f);
                 var positionLeapt = this.controller.Position.y;
-                Assert.AreEqual(positionLeapt, positionStepped, FloatTolerance);
+                Assert.AreEqual(positionLeapt, positionStepped, Common.FloatTolerance);
             }
 
             [Test]
@@ -357,7 +369,7 @@ namespace Tests
 
                 this.controller.WalkForce = 1;
                 this.controller.Simulate(1);
-                Assert.AreEqual(1, this.controller.Position.x, FloatTolerance);
+                Assert.AreEqual(1, this.controller.Position.x, Common.FloatTolerance);
             }
 
             [Test]
@@ -369,7 +381,7 @@ namespace Tests
 
                 this.controller.WalkForce = 1;
                 this.controller.Simulate(1);
-                Assert.AreEqual(Controller2D.Gravity, this.controller.Velocity.y, FloatTolerance);
+                Assert.AreEqual(Controller2D.Gravity, this.controller.Velocity.y, Common.FloatTolerance);
             }
 
             [Test]
@@ -416,7 +428,7 @@ namespace Tests
                 this.controller.WalkForce = -1;
                 this.controller.Simulate(1);
                 // Yes, this means player walks faster down slopes than up slopes or horizontally
-                Assert.AreEqual(-Controller2D.WalkSpeed, this.controller.Position.x, FloatTolerance);
+                Assert.AreEqual(-Controller2D.WalkSpeed, this.controller.Position.x, Common.FloatTolerance);
             }
 
             [Test]
@@ -431,7 +443,7 @@ namespace Tests
                 this.controller.WalkForce = -1;
                 this.controller.Simulate(1);
                 // Yes, this means player walks faster down slopes than up slopes or horizontally
-                Assert.AreEqual(currentY - Controller2D.WalkSpeed * Mathf.Tan(30 * Mathf.Deg2Rad), this.controller.Position.y, FloatTolerance);
+                Assert.AreEqual(currentY - Controller2D.WalkSpeed * Mathf.Tan(30 * Mathf.Deg2Rad), this.controller.Position.y, Common.FloatTolerance);
             }
 
             [Test]
@@ -443,6 +455,22 @@ namespace Tests
 
                 this.controller.Simulate(1);
                 this.controller.WalkForce = 1;
+                var startingPosition = this.controller.Position;
+                this.controller.Simulate(1);
+                Assert.Less(this.controller.Position.x, startingPosition.x);
+                Assert.Less(this.controller.Position.y, startingPosition.y);
+            }
+
+            [Test]
+            public void NotBeAbleToJumpOnSteepSlopes()
+            {
+                var groundCollider = this.ground.GetComponent<BoxCollider2D>();
+                this.ground.transform.Rotate(new Vector3(0, 0, 50));
+                groundCollider.offset = new Vector2(groundCollider.offset.x, groundCollider.offset.y - 1);
+
+                this.controller.Simulate(1);
+                this.controller.WalkForce = 1;
+                this.controller.JumpForce = 1;
                 var startingPosition = this.controller.Position;
                 this.controller.Simulate(1);
                 Assert.Less(this.controller.Position.x, startingPosition.x);

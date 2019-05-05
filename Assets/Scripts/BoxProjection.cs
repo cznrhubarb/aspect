@@ -5,7 +5,6 @@ public class BoxProjection
 {
     private const int RayCountPerSide = 4;
     private const float SkinWidth = 0.1f;
-    private const float FloatTolerance = 0.0001f;
 
     private Bounds bounds;
     private Vector2 boxCenter;
@@ -59,7 +58,7 @@ public class BoxProjection
         var rayList = new List<Ray2D>();
         var skinnedBounds = this.GetSkinnedBounds();
 
-        if (Mathf.Abs(this.projectionVector.x) > BoxProjection.FloatTolerance)
+        if (Mathf.Abs(this.projectionVector.x) > Common.FloatTolerance)
         {
             var xDirection = Mathf.Sign(this.projectionVector.x);
             for (var nRay = 0; nRay < RayCountPerSide; nRay++)
@@ -69,7 +68,7 @@ public class BoxProjection
             }
         }
 
-        if (Mathf.Abs(this.projectionVector.y) > BoxProjection.FloatTolerance)
+        if (Mathf.Abs(this.projectionVector.y) > Common.FloatTolerance)
         {
             var yDirection = Mathf.Sign(this.projectionVector.y);
             for (var nRay = 0; nRay < RayCountPerSide; nRay++)
