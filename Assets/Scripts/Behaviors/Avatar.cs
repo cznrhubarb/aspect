@@ -6,14 +6,13 @@ public class Avatar : MonoBehaviour
 
     void Start()
     {
-        this.Controller = new Controller2D(this.GetComponent<BoxCollider2D>());
+        this.Controller = new Controller2D(this.GetComponent<BoxCollider2D>(), new GorillaForm());
     }
 
     void FixedUpdate()
     {
-        Vector2 input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
-        this.Controller.WalkForce = input.x;
-        this.Controller.JumpForce = Mathf.Max(input.y, 0);
+        this.Controller.WalkForce = Input.GetAxisRaw("Horizontal");
+        this.Controller.JumpForce = Input.GetKeyDown(KeyCode.UpArrow) ? 1 : 0;
 
         this.Controller.Simulate(Time.deltaTime);
         this.transform.position = this.Controller.Position;

@@ -2,11 +2,7 @@
 
 public class Controller2D
 {
-    public const float Gravity = -40f;
-    public const float WalkSpeed = 15f;
-    public const float JumpPower = 22f;
     private const float MaxTimeStep = 1 / 100f;
-    private const float MaxClampDistance = -Gravity / 200;
 
     public Vector2 Position { get; set; }
     public Vector2 Velocity { get; set; }
@@ -16,14 +12,17 @@ public class Controller2D
 
     public BoxCollider2D Collider { get; private set; }
 
+    private IForm form;
+
     private Vector2 lastCollisionNormal;
 
     private float simulationTimer;
 
-    public Controller2D(BoxCollider2D collider)
+    public Controller2D(BoxCollider2D collider, IForm defaultForm)
     {
         this.Position = collider.transform.position;
         this.Collider = collider;
+        this.form = defaultForm;
     }
 
     public void Simulate(float elapsedTime)
@@ -34,19 +33,17 @@ public class Controller2D
         {
             this.simulationTimer -= Controller2D.MaxTimeStep;
 
-            // Walk speed : onGround
-            var inputVelocity = new Vector2(this.WalkForce * Controller2D.WalkSpeed, 0);
-            // Gravity
-            this.Velocity += new Vector2(0, Controller2D.Gravity) * Controller2D.MaxTimeStep;
-            // Can jump : onGround, distanceToWall? or nearestWall?
-            if (this.lastCollisionNormal.y > Mathf.Abs(this.lastCollisionNormal.x) && this.JumpForce > 0)
+            var inputVelocity = this.form.GetWalkVelocity(this.lastCollisionNormal, this.WalkForce);
+            this.Velocity += this.form.GetGravity(this.Velocity) * Controller2D.MaxTimeStep;
+            var jumpVelocity = this.form.GetJumpVelocity(this.lastCollisionNormal, this.JumpForce);
+            if (jumpVelocity != Vector2.zero)
             {
-                // Jump power : onGround?
-                // Jump vector?
-                this.Velocity += new Vector2(0, Controller2D.JumpPower);
+                this.Velocity = new Vector2(this.Velocity.x + jumpVelocity.x, jumpVelocity.y);
             }
 
             this.lastCollisionNormal = Vector2.zero;
+
+            this.form.Update(Controller2D.MaxTimeStep);
 
             this.ApplyVelocity(this.Velocity * Controller2D.MaxTimeStep, false);
             if (inputVelocity.sqrMagnitude > 0)
@@ -66,7 +63,7 @@ public class Controller2D
 
         if (collision)
         {
-            if (collision.normal.y > this.lastCollisionNormal.y)
+            if (this.lastCollisionNormal == Vector2.zero || collision.normal.y > this.lastCollisionNormal.y)
             {
                 this.lastCollisionNormal = collision.normal;
             }
@@ -114,7 +111,7 @@ public class Controller2D
             return;
         }
 
-        var clampVector = new Vector2(0, -MaxClampDistance);
+        var clampVector = new Vector2(0, -this.form.GetSlopeClampDistance());
         var collision = new BoxProjection(this.Collider.bounds, this.Position, clampVector).Project();
         if (collision)
         {

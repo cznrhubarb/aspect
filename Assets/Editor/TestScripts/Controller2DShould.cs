@@ -27,7 +27,7 @@ namespace Tests
             {
                 var adjustedBoxCollider = this.player.AddComponent<BoxCollider2D>();
                 adjustedBoxCollider.transform.position = new Vector2(2, 3);
-                var controller = new Controller2D(adjustedBoxCollider);
+                var controller = new Controller2D(adjustedBoxCollider, new HumanForm());
                 Assert.AreEqual(new Vector2(2, 3), controller.Position);
             }
         }
@@ -42,7 +42,7 @@ namespace Tests
             {
                 this.player = new GameObject();
                 this.player.name = "Player (Test)";
-                this.controller = new Controller2D(player.AddComponent<BoxCollider2D>());
+                this.controller = new Controller2D(player.AddComponent<BoxCollider2D>(), new HumanForm());
             }
 
             [TearDown]
@@ -55,7 +55,7 @@ namespace Tests
             public void BeAffectedByGravity()
             {
                 this.controller.Simulate(1);
-                Assert.AreEqual(Controller2D.Gravity, this.controller.Velocity.y, Common.FloatTolerance);
+                Assert.AreEqual(HumanForm.Gravity, this.controller.Velocity.y, Common.FloatTolerance);
             }
 
             [Test]
@@ -63,7 +63,7 @@ namespace Tests
             {
                 this.controller.Velocity = new Vector2(0, 20);
                 this.controller.Simulate(1);
-                Assert.AreEqual(20 + Controller2D.Gravity, this.controller.Velocity.y, Common.FloatTolerance);
+                Assert.AreEqual(20 + HumanForm.Gravity, this.controller.Velocity.y, Common.FloatTolerance);
             }
 
             [Test]
@@ -96,7 +96,7 @@ namespace Tests
                 this.player.name = "Player (Test)";
                 var boxCollider = player.AddComponent<BoxCollider2D>();
                 boxCollider.size = new Vector2(2, 3);
-                this.controller = new Controller2D(boxCollider);
+                this.controller = new Controller2D(boxCollider, new HumanForm());
 
                 this.ground = new GameObject();
                 this.ground.name = "Ground (Test)";
@@ -144,7 +144,7 @@ namespace Tests
                 var groundCollider = this.ground.GetComponent<BoxCollider2D>();
                 groundCollider.offset += new Vector2(0, 50);
                 this.controller.Simulate(0.1f);
-                Assert.AreEqual(Controller2D.Gravity * 0.1f, this.controller.Velocity.y, Common.FloatTolerance);
+                Assert.AreEqual(HumanForm.Gravity * 0.1f, this.controller.Velocity.y, Common.FloatTolerance);
             }
 
             [Test]
@@ -252,7 +252,7 @@ namespace Tests
                 this.player.name = "Player (Test)";
                 var boxCollider = player.AddComponent<BoxCollider2D>();
                 boxCollider.size = new Vector2(2, 3);
-                this.controller = new Controller2D(boxCollider);
+                this.controller = new Controller2D(boxCollider, new HumanForm());
             }
 
             [TearDown]
@@ -266,7 +266,7 @@ namespace Tests
             {
                 this.controller.WalkForce = 1;
                 this.controller.Simulate(1);
-                Assert.AreEqual(Controller2D.WalkSpeed, this.controller.Position.x, Common.FloatTolerance);
+                Assert.AreEqual(HumanForm.WalkSpeed, this.controller.Position.x, Common.FloatTolerance);
             }
 
             [Test]
@@ -275,7 +275,7 @@ namespace Tests
                 this.controller.WalkForce = 1;
                 this.controller.Simulate(0.1f);
                 this.controller.Simulate(0.9f);
-                Assert.AreEqual(Controller2D.WalkSpeed, this.controller.Position.x, Common.FloatTolerance);
+                Assert.AreEqual(HumanForm.WalkSpeed, this.controller.Position.x, Common.FloatTolerance);
             }
 
             [Test]
@@ -285,7 +285,7 @@ namespace Tests
                 this.controller.Simulate(1);
                 this.controller.WalkForce = 0;
                 this.controller.Simulate(1);
-                Assert.AreEqual(Controller2D.WalkSpeed, this.controller.Position.x, Common.FloatTolerance);
+                Assert.AreEqual(HumanForm.WalkSpeed, this.controller.Position.x, Common.FloatTolerance);
             }
         }
 
@@ -302,7 +302,7 @@ namespace Tests
                 this.player.name = "Player (Test)";
                 var boxCollider = player.AddComponent<BoxCollider2D>();
                 boxCollider.size = new Vector2(2, 3);
-                this.controller = new Controller2D(boxCollider);
+                this.controller = new Controller2D(boxCollider, new HumanForm());
 
                 this.ground = new GameObject();
                 this.ground.name = "Ground (Test)";
@@ -381,7 +381,7 @@ namespace Tests
 
                 this.controller.WalkForce = 1;
                 this.controller.Simulate(1);
-                Assert.AreEqual(Controller2D.Gravity, this.controller.Velocity.y, Common.FloatTolerance);
+                Assert.AreEqual(HumanForm.Gravity, this.controller.Velocity.y, Common.FloatTolerance);
             }
 
             [Test]
@@ -396,8 +396,8 @@ namespace Tests
                 this.controller.Simulate(1);
                 // Using a larger rounding error for these because there are a large number of collisions happening
                 //  And I think that is borking me. And I don't want to figure out a perfect solution.
-                var roundingError = Controller2D.WalkSpeed * 0.01f;
-                Assert.AreEqual(Controller2D.WalkSpeed * Mathf.Cos(30 * Mathf.Deg2Rad), this.controller.Position.x, roundingError);
+                var roundingError = HumanForm.WalkSpeed * 0.01f;
+                Assert.AreEqual(HumanForm.WalkSpeed * Mathf.Cos(30 * Mathf.Deg2Rad), this.controller.Position.x, roundingError);
             }
 
             [Test]
@@ -413,8 +413,8 @@ namespace Tests
                 this.controller.Simulate(1);
                 // Using a larger rounding error for these because there are a large number of collisions happening
                 //  And I think that is borking me. And I don't want to figure out a perfect solution.
-                var roundingError = Controller2D.WalkSpeed * 0.01f;
-                Assert.AreEqual(currentY + Controller2D.WalkSpeed * Mathf.Sin(30 * Mathf.Deg2Rad), this.controller.Position.y, roundingError);
+                var roundingError = HumanForm.WalkSpeed * 0.01f;
+                Assert.AreEqual(currentY + HumanForm.WalkSpeed * Mathf.Sin(30 * Mathf.Deg2Rad), this.controller.Position.y, roundingError);
             }
 
             [Test]
@@ -428,7 +428,7 @@ namespace Tests
                 this.controller.WalkForce = -1;
                 this.controller.Simulate(1);
                 // Yes, this means player walks faster down slopes than up slopes or horizontally
-                Assert.AreEqual(-Controller2D.WalkSpeed, this.controller.Position.x, Common.FloatTolerance);
+                Assert.AreEqual(-HumanForm.WalkSpeed, this.controller.Position.x, Common.FloatTolerance);
             }
 
             [Test]
@@ -443,7 +443,7 @@ namespace Tests
                 this.controller.WalkForce = -1;
                 this.controller.Simulate(1);
                 // Yes, this means player walks faster down slopes than up slopes or horizontally
-                Assert.AreEqual(currentY - Controller2D.WalkSpeed * Mathf.Tan(30 * Mathf.Deg2Rad), this.controller.Position.y, Common.FloatTolerance);
+                Assert.AreEqual(currentY - HumanForm.WalkSpeed * Mathf.Tan(30 * Mathf.Deg2Rad), this.controller.Position.y, Common.FloatTolerance);
             }
 
             [Test]

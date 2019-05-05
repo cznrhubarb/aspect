@@ -1,8 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
-public class Camera : MonoBehaviour
+public class PlayerFollowCamera : MonoBehaviour
 {
     [SerializeField]
     private GameObject playerAvatar;
