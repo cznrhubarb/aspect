@@ -72,15 +72,6 @@ namespace Tests
                 this.controller.Simulate(1);
                 Assert.AreEqual(0, this.controller.Position.x, Common.FloatTolerance);
             }
-
-            [Test]
-            public void ChangePositionBasedOnVelocityOverTime()
-            {
-                this.controller.Velocity = new Vector2(10, 0);
-                this.controller.Simulate(1);
-                this.controller.Simulate(0.5f);
-                Assert.AreEqual(15, this.controller.Position.x, Common.FloatTolerance);
-            }
         }
 
         public class CollisionTests
@@ -157,21 +148,13 @@ namespace Tests
             }
 
             [Test]
-            public void StillMoveHorizontallyIfCollidingWithTheGroundVertically()
-            {
-                this.controller.Velocity = new Vector2(5, 0);
-                this.controller.Simulate(1);
-                Assert.AreEqual(5, this.controller.Position.x, Common.FloatTolerance);
-            }
-
-            [Test]
             public void StopMovingHorizontallyAtWalls()
             {
                 var groundCollider = this.ground.GetComponent<BoxCollider2D>();
                 groundCollider.size = new Vector2(1, 10);
                 groundCollider.offset = new Vector2(1 + this.controller.Collider.transform.position.x + this.controller.Collider.bounds.extents.x + groundCollider.bounds.extents.x, 0);
 
-                this.controller.Velocity = new Vector2(5, 0);
+                this.controller.Velocity = new Vector2(50, 0);
                 this.controller.Simulate(1);
                 Assert.AreEqual(1, this.controller.Position.x, Common.FloatTolerance);
             }
@@ -185,10 +168,10 @@ namespace Tests
                     wall.name = "Wall (Test)";
                     wall.layer = LayerMask.NameToLayer("SolidObstacles");
                     var groundCollider = wall.AddComponent<BoxCollider2D>();
-                    groundCollider.size = new Vector2(1, 10);
+                    groundCollider.size = new Vector2(5, 10);
                     groundCollider.offset = new Vector2(1 + this.controller.Collider.transform.position.x + this.controller.Collider.bounds.extents.x + groundCollider.bounds.extents.x, 0);
 
-                    this.controller.Velocity = new Vector2(5, 0);
+                    this.controller.Velocity = new Vector2(50, 0);
                     this.controller.Simulate(1);
                     Assert.AreEqual(1, this.controller.Position.x, Common.FloatTolerance);
                 }

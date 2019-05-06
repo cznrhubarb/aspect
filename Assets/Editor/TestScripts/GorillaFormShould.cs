@@ -78,21 +78,15 @@ namespace Tests
             Assert.AreEqual(firstJumpVector, this.form.GetJumpVelocity(wallNormal, 1));
         }
 
-        [Test]
-        public void NotReturnHorizontalMovementImmediatelyAfterWallJumping()
+        [TestCase(0f)]
+        [TestCase(0.4f)]
+        [TestCase(1f)]
+        public void DampenHorizontalMovementAfterWallJumping(float delayFraction)
         {
             var wallNormal = Vector2.right;
             this.form.GetJumpVelocity(wallNormal, 1);
-            Assert.AreEqual(0, this.form.GetWalkVelocity(wallNormal, 1).x);
-        }
-
-        [Test]
-        public void AllowHorizontalMovementAfterWallJumpingAfterDelay()
-        {
-            var wallNormal = Vector2.right;
-            this.form.GetJumpVelocity(wallNormal, 1);
-            this.form.Update(GorillaForm.WalkDelayAfterJump);
-            Assert.AreEqual(GorillaForm.WalkSpeed, this.form.GetWalkVelocity(wallNormal, 1).x);
+            this.form.Update(GorillaForm.WalkDelayAfterJump * delayFraction);
+            Assert.AreEqual(GorillaForm.WalkSpeed * delayFraction, this.form.GetWalkVelocity(wallNormal, 1).x);
         }
 
         [Test]

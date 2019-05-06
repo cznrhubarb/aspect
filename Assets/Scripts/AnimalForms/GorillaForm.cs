@@ -3,10 +3,10 @@
 public class GorillaForm : IForm
 {
     public const float Gravity = -40f;
-    public const float WalkSpeed = 15f;
+    public const float WalkSpeed = 25f;
     public const float JumpPower = 22f;
     public const float DelayBetweenJumps = 0.4f;
-    public const float WalkDelayAfterJump = 0.3f;
+    public const float WalkDelayAfterJump = 0.75f;
 
     private float jumpDelay;
     private float walkDelay;
@@ -19,12 +19,8 @@ public class GorillaForm : IForm
 
     public Vector2 GetWalkVelocity(Vector2 lastCollisionNormal, float walkForce)
     {
-        if (this.walkDelay <= 0)
-        {
-            return new Vector2(walkForce * GorillaForm.WalkSpeed, 0);
-        }
-
-        return Vector2.zero;
+        var delayRatio = 1 - (this.walkDelay / GorillaForm.WalkDelayAfterJump);
+        return new Vector2(walkForce * GorillaForm.WalkSpeed * delayRatio, 0);
     }
 
     public Vector2 GetJumpVelocity(Vector2 pushOffNormal, float jumpForce)
@@ -62,14 +58,7 @@ public class GorillaForm : IForm
 
     public void Update(float elapsedTime)
     {
-        if (this.jumpDelay > 0)
-        {
-            this.jumpDelay -= elapsedTime;
-        }
-
-        if (this.walkDelay > 0)
-        {
-            this.walkDelay -= elapsedTime;
-        }
+        this.jumpDelay = Mathf.Max(0, this.jumpDelay - elapsedTime);
+        this.walkDelay = Mathf.Max(0, this.walkDelay - elapsedTime);
     }
 }

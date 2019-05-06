@@ -3,6 +3,7 @@
 public class Controller2D
 {
     private const float MaxTimeStep = 1 / 100f;
+    private const float Drag = 15f;
 
     public Vector2 Position { get; set; }
     public Vector2 Velocity { get; set; }
@@ -50,10 +51,22 @@ public class Controller2D
             {
                 this.ApplyVelocity(inputVelocity * Controller2D.MaxTimeStep, true);
             }
+
+            // Drag
+            var dragMag = Controller2D.Drag * Controller2D.MaxTimeStep;
+            if (Mathf.Abs(this.Velocity.x) > dragMag)
+            {
+                var drag = new Vector2(-Mathf.Sign(this.Velocity.x) * dragMag, 0);
+                this.Velocity += drag;
+            }
+            else
+            {
+                this.Velocity = new Vector2(0, this.Velocity.y);
+            }
         }
     }
 
-    private void ApplyVelocity(Vector2 velocity, bool isInputVelocity)
+    private void ApplyVelocity(Vector2 velocity, bool isInputVelocity, int recurseDepth = 0)
     {
         var collision = new BoxProjection(this.Collider.bounds, this.Position, velocity).Project();
 
@@ -68,17 +81,10 @@ public class Controller2D
                 this.lastCollisionNormal = collision.normal;
             }
 
-            if (Vector2.Angle(collision.normal, Vector2.up) < 45 && adjustmentVectors.Alignment == CollisionAlignment.Opposed)
+            if ((Vector2.Angle(collision.normal, Vector2.up) < 45 && adjustmentVectors.Alignment == CollisionAlignment.Opposed) ||
+                collision.normal.y < 0)
             {
-                // Ground
-                if (!isInputVelocity)
-                {
-                    this.Velocity = Vector2.zero;
-                }
-            }
-            else if (collision.normal.y < 0)
-            {
-                // Ceiling
+                // Ground / Ceiling
                 if (!isInputVelocity)
                 {
                     this.Velocity = Vector2.zero;
@@ -93,7 +99,15 @@ public class Controller2D
                 }
                 if (adjustmentVectors.Second.sqrMagnitude > 0)
                 {
-                    this.Position += adjustmentVectors.Second;
+                    // HACK: Just give up. We can't seem to get this right.
+                    if (recurseDepth >= 3)
+                    {
+                        this.Position += adjustmentVectors.Second;
+                    }
+                    else
+                    {
+                        this.ApplyVelocity(adjustmentVectors.Second, isInputVelocity, recurseDepth + 1);
+                    }
                 }
             }
         }
