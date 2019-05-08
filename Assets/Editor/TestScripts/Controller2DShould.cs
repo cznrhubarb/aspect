@@ -55,15 +55,15 @@ namespace Tests
             public void BeAffectedByGravity()
             {
                 this.controller.Simulate(1);
-                Assert.AreEqual(HumanForm.Gravity, this.controller.Velocity.y, Common.FloatTolerance);
+                Assert.AreEqual(HumanForm.FallGravity, this.controller.Velocity.y, Common.FloatTolerance);
             }
 
             [Test]
             public void AccumulateGravity()
             {
-                this.controller.Velocity = new Vector2(0, 20);
+                this.controller.Velocity = new Vector2(0, -20);
                 this.controller.Simulate(1);
-                Assert.AreEqual(20 + HumanForm.Gravity, this.controller.Velocity.y, Common.FloatTolerance);
+                Assert.AreEqual(-20 + HumanForm.FallGravity, this.controller.Velocity.y, Common.FloatTolerance);
             }
 
             [Test]
@@ -135,7 +135,7 @@ namespace Tests
                 var groundCollider = this.ground.GetComponent<BoxCollider2D>();
                 groundCollider.offset += new Vector2(0, 50);
                 this.controller.Simulate(0.1f);
-                Assert.AreEqual(HumanForm.Gravity * 0.1f, this.controller.Velocity.y, Common.FloatTolerance);
+                Assert.AreEqual(HumanForm.FallGravity * 0.1f, this.controller.Velocity.y, Common.FloatTolerance);
             }
 
             [Test]
@@ -364,7 +364,7 @@ namespace Tests
 
                 this.controller.WalkForce = 1;
                 this.controller.Simulate(1);
-                Assert.AreEqual(HumanForm.Gravity, this.controller.Velocity.y, Common.FloatTolerance);
+                Assert.AreEqual(HumanForm.FallGravity, this.controller.Velocity.y, Common.FloatTolerance);
             }
 
             [Test]
@@ -458,6 +458,42 @@ namespace Tests
                 this.controller.Simulate(1);
                 Assert.Less(this.controller.Position.x, startingPosition.x);
                 Assert.Less(this.controller.Position.y, startingPosition.y);
+            }
+
+            [Test]
+            public void BeAbleToVaryJumpHeightViaInput()
+            {
+                var startingPosition = this.controller.Position.y;
+                this.controller.Simulate(0.01f);
+                this.controller.JumpForce = 1;
+                this.controller.Simulate(0.5f);
+                var fullJumpHeight = this.controller.Position.y;
+                this.controller.Position = new Vector2(0, startingPosition);
+                this.controller.Simulate(0.01f);
+                this.controller.JumpForce = 1;
+                this.controller.Simulate(0.25f);
+                this.controller.JumpForce = 0;
+                this.controller.Simulate(0.25f);
+                Assert.Less(this.controller.Position.y, fullJumpHeight);
+            }
+
+            [Test]
+            public void AccelerateDownwardFasterOnDescent()
+            {
+                this.controller.Simulate(0.01f);
+                this.controller.JumpForce = 1;
+                this.controller.Simulate(0.01f);
+                var startJumpVelocity = this.controller.Velocity.y;
+                this.controller.Simulate(0.1f);
+                var endJumpVelocity = this.controller.Velocity.y;
+
+                this.controller.Velocity = Vector2.zero;
+                this.controller.Position = new Vector2(0, 50);
+                var startFallVelocity = this.controller.Velocity.y;
+                this.controller.Simulate(0.1f);
+                var endFallVelocity = this.controller.Velocity.y;
+
+                Assert.Greater(Mathf.Abs(startFallVelocity - endFallVelocity), Mathf.Abs(startJumpVelocity - endJumpVelocity) + Common.FloatTolerance);
             }
         }
     }

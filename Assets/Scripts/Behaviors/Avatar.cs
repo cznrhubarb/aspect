@@ -11,6 +11,10 @@ public class Avatar : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            this.Controller.Velocity = new Vector2(40, 10);
+        }
         this.Controller.WalkForce = Input.GetAxisRaw("Horizontal");
         this.Controller.JumpForce = Input.GetKeyDown(KeyCode.UpArrow) ? 1 : 0;
 

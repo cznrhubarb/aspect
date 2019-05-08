@@ -35,12 +35,34 @@ public class Controller2D
             this.simulationTimer -= Controller2D.MaxTimeStep;
 
             var inputVelocity = this.form.GetWalkVelocity(this.lastCollisionNormal, this.WalkForce);
-            this.Velocity += this.form.GetGravity(this.Velocity) * Controller2D.MaxTimeStep;
+            this.Velocity += this.form.GetGravity(this.Velocity, this.JumpForce) * Controller2D.MaxTimeStep;
             var jumpVelocity = this.form.GetJumpVelocity(this.lastCollisionNormal, this.JumpForce);
             if (jumpVelocity != Vector2.zero)
             {
                 this.Velocity = new Vector2(this.Velocity.x + jumpVelocity.x, jumpVelocity.y);
             }
+
+            //// Drag
+            //var dragMag = Controller2D.Drag * Controller2D.MaxTimeStep;
+            //if (this.lastCollisionNormal != Vector2.zero)
+            //{
+            //    dragMag *= 4;
+            //}
+            ////if ((this.Velocity.x > 0 && inputVelocity.x < 0) || (this.Velocity.x < 0 && inputVelocity.x > 0))
+            ////{
+            ////    dragMag += Mathf.Abs(inputVelocity.x) * Controller2D.MaxTimeStep / 2;
+            ////    //inputVelocity = Vector2.zero;
+            ////}
+            //if (Mathf.Abs(this.Velocity.x) > dragMag)
+            //{
+            //    var drag = new Vector2(-Mathf.Sign(this.Velocity.x) * dragMag, 0);
+            //    this.Velocity += drag;
+            //}
+            //else
+            //{
+            //    this.Velocity = new Vector2(0, this.Velocity.y);
+            //}
+
 
             this.lastCollisionNormal = Vector2.zero;
 
@@ -50,18 +72,6 @@ public class Controller2D
             if (inputVelocity.sqrMagnitude > 0)
             {
                 this.ApplyVelocity(inputVelocity * Controller2D.MaxTimeStep, true);
-            }
-
-            // Drag
-            var dragMag = Controller2D.Drag * Controller2D.MaxTimeStep;
-            if (Mathf.Abs(this.Velocity.x) > dragMag)
-            {
-                var drag = new Vector2(-Mathf.Sign(this.Velocity.x) * dragMag, 0);
-                this.Velocity += drag;
-            }
-            else
-            {
-                this.Velocity = new Vector2(0, this.Velocity.y);
             }
         }
     }

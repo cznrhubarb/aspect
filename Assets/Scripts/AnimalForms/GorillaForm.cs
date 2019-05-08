@@ -2,9 +2,11 @@
 
 public class GorillaForm : IForm
 {
-    public const float Gravity = -40f;
+    private const float JumpHeight = 4;
+    private const float TimeToJumpApex = 0.4f;
+    public const float Gravity = -(2 * JumpHeight) / TimeToJumpApex;
+    public const float JumpPower = -Gravity * TimeToJumpApex;
     public const float WalkSpeed = 25f;
-    public const float JumpPower = 22f;
     public const float DelayBetweenJumps = 0.4f;
     public const float WalkDelayAfterJump = 0.75f;
 
@@ -46,7 +48,7 @@ public class GorillaForm : IForm
         return jumpVelocity;
     }
 
-    public Vector2 GetGravity(Vector2 currentVelocity)
+    public Vector2 GetGravity(Vector2 currentVelocity, float jumpForce)
     {
         return new Vector2(0, GorillaForm.Gravity);
     }
